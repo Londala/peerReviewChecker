@@ -12,7 +12,7 @@ from models import Verdict
 load_dotenv()
 
 ctk.set_appearance_mode("dark")
-ctk.set_default_color_theme("blue")
+ctk.set_default_color_theme("dark-blue")
 
 # ── Palette ───────────────────────────────────────────────────────────────────
 BG       = "#0d1117"
@@ -85,7 +85,10 @@ class App(ctk.CTk):
         self._selected: int | None = None
         self._mode = ctk.StringVar(value="single")
         self._batchpath = ""
+        self._drag_x = 0
+        self._drag_y = 0
 
+        self.overrideredirect(True)
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(4, weight=1)
 
@@ -104,13 +107,24 @@ class App(ctk.CTk):
         self._build_export()
 
     def _build_titlebar(self) -> None:
-        bar = ctk.CTkFrame(self, fg_color=SURFACE, corner_radius=0, height=46)
+        bar = ctk.CTkFrame(self, fg_color=BG, corner_radius=0, height=46)
         bar.grid(row=0, column=0, sticky="ew")
         bar.grid_propagate(False)
         ctk.CTkLabel(
             bar, text="Peer Review Checker",
             font=ctk.CTkFont(size=16, weight="bold"), text_color=TEXT,
         ).place(x=18, rely=0.5, anchor="w")
+        # Window controls
+        for rx, text, cmd in [(1.0, "✕", self.destroy), (0.956, "□", self._toggle_max), (0.912, "─", self._minimize)]:
+            ctk.CTkButton(
+                bar, text=text, width=36, height=36, corner_radius=0,
+                fg_color="transparent", hover_color=SURFACE2,
+                text_color=MUTED, font=ctk.CTkFont(size=13),
+                command=cmd,
+            ).place(relx=rx, rely=0.5, anchor="e")
+        # Drag support
+        bar.bind("<ButtonPress-1>", self._drag_start)
+        bar.bind("<B1-Motion>", self._drag_move)
 
     def _build_mode_toggle(self) -> None:
         bar = ctk.CTkFrame(self, fg_color=SURFACE2, corner_radius=0, height=38)
@@ -231,6 +245,26 @@ class App(ctk.CTk):
                 fg_color=SURFACE2, hover_color=BORDER, text_color=TEXT,
                 command=cmd,
             ).pack(side="left", padx=(16 if text == "Export CSV" else 0, 6), pady=8)
+
+    # ── Window chrome ─────────────────────────────────────────────────────────
+
+    def _drag_start(self, event) -> None:
+        self._drag_x = event.x_root - self.winfo_x()
+        self._drag_y = event.y_root - self.winfo_y()
+
+    def _drag_move(self, event) -> None:
+        self.geometry(f"+{event.x_root - self._drag_x}+{event.y_root - self._drag_y}")
+
+    def _minimize(self) -> None:
+        self.overrideredirect(False)
+        self.iconify()
+        self.bind("<Map>", lambda _e: (self.overrideredirect(True), self.unbind("<Map>")))
+
+    def _toggle_max(self) -> None:
+        if self.wm_attributes("-zoomed"):
+            self.wm_attributes("-zoomed", False)
+        else:
+            self.wm_attributes("-zoomed", True)
 
     # ── Handlers ──────────────────────────────────────────────────────────────
 
