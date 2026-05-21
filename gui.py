@@ -1,5 +1,7 @@
 import csv
 import json
+import sys
+from pathlib import Path
 
 import customtkinter as ctk
 from dotenv import load_dotenv
@@ -9,7 +11,10 @@ from checker.input import ValidationError, normalize
 from checker.pipeline import check
 from models import Verdict
 
-load_dotenv()
+# When frozen by PyInstaller, load .env from the executable's directory
+# rather than the extraction temp dir.
+_app_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
+load_dotenv(_app_dir / ".env")
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")

@@ -129,6 +129,38 @@ Confidence ranges from 0–1. Sources:
 
 Verdict is inconclusive if best confidence < 0.6.
 
+## Building a standalone executable
+
+Executables must be built on the target platform (Windows exe on Windows, macOS app on Mac).
+
+### macOS / Linux
+
+```bash
+bash build.sh
+```
+
+Output: `dist/PeerReviewChecker` (Linux) or `dist/PeerReviewChecker.app` (macOS).
+
+### Windows
+
+```bat
+build.bat
+```
+
+Output: `dist\PeerReviewChecker.exe`.
+
+### Distributing
+
+Place a `.env` file next to the executable (or `.app` on Mac) with API keys filled in. Users who don't have API keys can omit `BRAVE_API_KEY` and `SHERPA_API_KEY` — those sources will be skipped. `CROSSREF_EMAIL` should always be set.
+
+```
+CROSSREF_EMAIL=user@example.com
+BRAVE_API_KEY=optional
+SHERPA_API_KEY=optional
+```
+
+On macOS, if Gatekeeper blocks the app: right-click → Open → Open anyway.
+
 ## Running tests
 
 ```bash
