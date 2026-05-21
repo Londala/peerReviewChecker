@@ -7,3 +7,8 @@ __pycache__/
 htmlcov/
 *.egg-info/
 .DS_Store
+
+# PyInstaller build outputs
+dist/
+build/
+*.spec.bak
