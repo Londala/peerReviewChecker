@@ -1,6 +1,5 @@
 import csv
 import json
-from tkinter import filedialog
 
 import customtkinter as ctk
 from dotenv import load_dotenv
@@ -245,7 +244,7 @@ class App(ctk.CTk):
         self._error_lbl.configure(text="")
 
     def _browse(self) -> None:
-        path = filedialog.askopenfilename(
+        path = ctk.filedialog.askopenfilename(
             filetypes=[("CSV/JSON files", "*.csv *.json"), ("All files", "*.*")],
         )
         if path:
@@ -379,7 +378,7 @@ class App(ctk.CTk):
     # ── Export ────────────────────────────────────────────────────────────────
 
     def _export_csv(self) -> None:
-        path = filedialog.asksaveasfilename(
+        path = ctk.filedialog.asksaveasfilename(
             defaultextension=".csv", filetypes=[("CSV files", "*.csv")],
         )
         if not path:
@@ -394,7 +393,7 @@ class App(ctk.CTk):
                 ])
 
     def _export_json(self) -> None:
-        path = filedialog.asksaveasfilename(
+        path = ctk.filedialog.asksaveasfilename(
             defaultextension=".json", filetypes=[("JSON files", "*.json")],
         )
         if not path:
