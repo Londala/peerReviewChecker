@@ -24,7 +24,7 @@ def test_doi_lookup_peer_reviewed():
     assert result.source == "crossref"
     assert result.found is True
     assert result.peer_reviewed is True
-    assert result.confidence == 0.85
+    assert result.confidence == 0.75
 
 
 @responses.activate

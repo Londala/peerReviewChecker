@@ -1,12 +1,16 @@
+import os
 import requests
 import responses
+from unittest.mock import patch
 from models import ArticleInput
 from checker.sources.websearch import lookup
 
 BRAVE_URL = "https://api.search.brave.com/res/v1/web/search"
+FAKE_KEY = {"BRAVE_API_KEY": "test-key"}
 
 
 @responses.activate
+@patch.dict(os.environ, FAKE_KEY)
 def test_pubmed_hit_signals_peer_reviewed():
     responses.add(
         responses.GET,
@@ -30,6 +34,7 @@ def test_pubmed_hit_signals_peer_reviewed():
 
 
 @responses.activate
+@patch.dict(os.environ, FAKE_KEY)
 def test_peer_reviewed_in_snippet():
     responses.add(
         responses.GET,
@@ -52,6 +57,7 @@ def test_peer_reviewed_in_snippet():
 
 
 @responses.activate
+@patch.dict(os.environ, FAKE_KEY)
 def test_no_signals_returns_inconclusive():
     responses.add(
         responses.GET,
@@ -65,6 +71,7 @@ def test_no_signals_returns_inconclusive():
 
 
 @responses.activate
+@patch.dict(os.environ, FAKE_KEY)
 def test_empty_results_returns_not_found():
     responses.add(
         responses.GET,
@@ -77,6 +84,7 @@ def test_empty_results_returns_not_found():
 
 
 @responses.activate
+@patch.dict(os.environ, FAKE_KEY)
 def test_network_error_returns_safe_result():
     responses.add(responses.GET, BRAVE_URL, body=requests.exceptions.ConnectionError("timeout"))
     article = ArticleInput(title="Test")
@@ -84,3 +92,12 @@ def test_network_error_returns_safe_result():
     assert result.found is False
     assert result.confidence == 0.0
     assert "Network error" in result.evidence
+
+
+def test_missing_api_key_returns_skip_result():
+    with patch.dict(os.environ, {"BRAVE_API_KEY": ""}):
+        article = ArticleInput(title="Some Article")
+        result = lookup(article)
+        assert result.found is False
+        assert result.confidence == 0.0
+        assert "BRAVE_API_KEY not configured" in result.evidence

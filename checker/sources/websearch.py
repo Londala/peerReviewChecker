@@ -20,6 +20,11 @@ def lookup(article: ArticleInput) -> SourceResult:
             confidence=0.0, evidence="No title available for web search",
         )
     api_key = os.getenv("BRAVE_API_KEY", "")
+    if not api_key:
+        return SourceResult(
+            source="websearch", found=False, peer_reviewed=None,
+            confidence=0.0, evidence="BRAVE_API_KEY not configured — skipping web search",
+        )
     query = f'"{article.title}" peer reviewed journal site:pubmed.ncbi.nlm.nih.gov OR site:scholar.google.com'
     try:
         resp = requests.get(

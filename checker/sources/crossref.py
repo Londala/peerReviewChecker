@@ -73,10 +73,11 @@ def _parse_work(work: dict) -> SourceResult:
     is_journal_article = work_type == "journal-article"
 
     if is_journal_article:
-        confidence = 0.85 if ref_count > 0 else 0.65
+        confidence = 0.75 if ref_count > 0 else 0.55
         evidence = f"Journal article in '{journal}'"
         if ref_count > 0:
             evidence += f" with {ref_count} citations"
+        evidence += " (peer-review inferred from type)"
         return SourceResult(
             source="crossref", found=True, peer_reviewed=True,
             confidence=confidence, evidence=evidence,
