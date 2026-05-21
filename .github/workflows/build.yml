@@ -1,0 +1,84 @@
+name: Build executables
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:   # allow manual trigger from GitHub UI
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: PeerReviewChecker.exe
+            path: dist/PeerReviewChecker.exe
+          - os: macos-latest
+            artifact: PeerReviewChecker-mac.zip
+            path: dist/PeerReviewChecker-mac.zip
+          - os: ubuntu-latest
+            artifact: PeerReviewChecker-linux
+            path: dist/PeerReviewChecker
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-build.txt
+
+      - name: Install tkinter (Linux only)
+        if: runner.os == 'Linux'
+        run: sudo apt-get install -y python3-tk
+
+      - name: Build executable
+        run: pyinstaller --noconfirm peer_review_checker.spec
+
+      - name: Zip macOS app bundle
+        if: runner.os == 'macOS'
+        run: cd dist && zip -r PeerReviewChecker-mac.zip PeerReviewChecker.app
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.path }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    # Only create a release when triggered by a version tag
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/PeerReviewChecker.exe
+            artifacts/PeerReviewChecker-mac.zip
+            artifacts/PeerReviewChecker-linux
+          body: |
+            ## Installation
+
+            Download the file for your platform. No Python required.
+
+            | Platform | File |
+            |----------|------|
+            | Windows  | `PeerReviewChecker.exe` |
+            | macOS    | `PeerReviewChecker-mac.zip` — unzip, then double-click the `.app` |
+            | Linux    | `PeerReviewChecker-linux` — `chmod +x` then run |
+
+            Create a `.env` file next to the executable with your API keys (see README).
+            On macOS, if Gatekeeper blocks it: right-click → Open → Open anyway.

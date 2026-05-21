@@ -131,27 +131,36 @@ Verdict is inconclusive if best confidence < 0.6.
 
 ## Building a standalone executable
 
-Executables must be built on the target platform (Windows exe on Windows, macOS app on Mac).
+### Build all platforms from Linux (recommended)
 
-### macOS / Linux
+Push a version tag to trigger GitHub Actions — it builds Windows, macOS, and Linux executables in parallel using native runners and attaches them to a GitHub Release.
 
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+Download the built executables from the **Releases** page or from the **Actions** tab → select the run → **Artifacts**.
+
+You can also trigger a build without a release from the **Actions** tab → **Build executables** → **Run workflow**.
+
+### Build locally (must run on the target platform)
+
+**macOS / Linux:**
 ```bash
 bash build.sh
 ```
-
 Output: `dist/PeerReviewChecker` (Linux) or `dist/PeerReviewChecker.app` (macOS).
 
-### Windows
-
+**Windows:**
 ```bat
 build.bat
 ```
-
 Output: `dist\PeerReviewChecker.exe`.
 
 ### Distributing
 
-Place a `.env` file next to the executable (or `.app` on Mac) with API keys filled in. Users who don't have API keys can omit `BRAVE_API_KEY` and `SHERPA_API_KEY` — those sources will be skipped. `CROSSREF_EMAIL` should always be set.
+Place a `.env` file next to the executable (or `.app` on Mac) with API keys filled in. Users who don't have API keys can omit `BRAVE_API_KEY` and `SHERPA_API_KEY` — those sources will be skipped. `CROSSREF_EMAIL` should always be set. Alternatively, users can configure keys directly in the app via **⚙ Settings**.
 
 ```
 CROSSREF_EMAIL=user@example.com
