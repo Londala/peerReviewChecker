@@ -2,13 +2,30 @@
 
 Checks whether a journal article is peer-reviewed by querying Crossref, DOAJ, OpenAlex, Sherpa Romeo, and Brave Search. Available as a desktop GUI or CLI.
 
-## Requirements
+## Download
+
+Pre-built executables are attached to each [GitHub Release](../../releases/latest) — no Python required.
+
+| Platform | File |
+|----------|------|
+| Windows  | `PeerReviewChecker.exe` |
+| macOS    | `PeerReviewChecker-mac.zip` — unzip, then double-click the `.app` |
+| Linux    | `PeerReviewChecker-linux` — `chmod +x` then run |
+
+On first launch, click **⚙ Settings** to enter your API keys. Only `CROSSREF_EMAIL` is required; the others enable additional sources.
+
+On macOS, if Gatekeeper blocks the app: right-click → Open → Open anyway.
+
+---
+
+## Running from source
+
+### Requirements
 
 - Python 3.10+
-- Linux, macOS, or Windows (WSL supported)
 - `tkinter` — usually bundled with Python; on Ubuntu/Debian: `sudo apt-get install python3-tk`
 
-## Setup
+### Setup
 
 ```bash
 git clone <repo-url>
@@ -27,9 +44,11 @@ BRAVE_API_KEY=your_key_here         # Optional — enables web search fallback
 SHERPA_API_KEY=your_key_here        # Optional — enables Sherpa Romeo journal lookup
 ```
 
-Brave API key is free at [brave.com/search/api](https://brave.com/search/api) (2000 req/month). Sherpa Romeo key is free at [v2.sherpa.ac.uk/cgi/register](https://v2.sherpa.ac.uk/cgi/register). Without optional keys, those sources are skipped.
+Brave API key: free at [brave.com/search/api](https://brave.com/search/api) (2000 req/month).  
+Sherpa Romeo key: free at [v2.sherpa.ac.uk/cgi/register](https://v2.sherpa.ac.uk/cgi/register).  
+Without optional keys, those sources are skipped.
 
-## GUI
+### GUI
 
 ```bash
 python gui.py
@@ -39,52 +58,16 @@ Enter any combination of Title, DOI, ISSN, Author, and Journal, then click **Che
 
 **Batch mode:** switch to *Batch File*, browse for a CSV or JSON file (same format as CLI batch below), and click **Check**. Rows appear as each article completes.
 
-## CLI Usage
-
-### Single article
+### CLI
 
 ```bash
 python main.py --doi "10.1038/nature12373"
 python main.py --title "Observation of a new boson at a mass of 125 GeV"
 python main.py --issn "0028-0836"
 python main.py --title "..." --author "Higgs" --journal "Nature"
-```
-
-### JSON output
-
-```bash
-python main.py --doi "10.1038/nature12373" --json
-```
-
-```json
-{
-  "peer_reviewed": true,
-  "confidence": 0.75,
-  "sources": [
-    {
-      "source": "crossref",
-      "found": true,
-      "peer_reviewed": true,
-      "confidence": 0.75,
-      "evidence": "Journal article in 'Nature' with 1770 citations (peer-review inferred from type)"
-    }
-  ]
-}
-```
-
-### Interactive mode
-
-```bash
-python main.py
-```
-
-Prompts for title, DOI, and ISSN.
-
-### Batch file
-
-```bash
-python main.py --file articles.csv
-python main.py --file articles.json --json
+python main.py --doi "10.1038/nature12373" --json   # JSON output
+python main.py                                       # interactive mode
+python main.py --file articles.csv                  # batch
 ```
 
 **CSV format** (header required, any subset of columns):
@@ -104,7 +87,7 @@ Some Other Article,,,Smith,
 ]
 ```
 
-Results stream to stdout as each article completes. Errors print to stderr; processing continues.
+---
 
 ## Output
 
@@ -129,48 +112,38 @@ Confidence ranges from 0–1. Sources:
 
 Verdict is inconclusive if best confidence < 0.6.
 
-## Building a standalone executable
+---
 
-### Build all platforms from Linux (recommended)
+## Building releases
 
-Push a version tag to trigger GitHub Actions — it builds Windows, macOS, and Linux executables in parallel using native runners and attaches them to a GitHub Release.
+Releases are built automatically by GitHub Actions on every version tag. To publish a new release:
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-Download the built executables from the **Releases** page or from the **Actions** tab → select the run → **Artifacts**.
+GitHub Actions builds Windows, macOS, and Linux executables in parallel on native runners and attaches them to a GitHub Release automatically.
 
-You can also trigger a build without a release from the **Actions** tab → **Build executables** → **Run workflow**.
+To build without publishing (e.g. to test the workflow): **Actions** tab → **Build executables** → **Run workflow**. Download the per-platform artifacts from the run page.
 
-### Build locally (must run on the target platform)
+### Build locally
+
+Must run on the target platform.
 
 **macOS / Linux:**
 ```bash
 bash build.sh
 ```
-Output: `dist/PeerReviewChecker` (Linux) or `dist/PeerReviewChecker.app` (macOS).
 
 **Windows:**
 ```bat
 build.bat
 ```
-Output: `dist\PeerReviewChecker.exe`.
 
-### Distributing
+---
 
-Place a `.env` file next to the executable (or `.app` on Mac) with API keys filled in. Users who don't have API keys can omit `BRAVE_API_KEY` and `SHERPA_API_KEY` — those sources will be skipped. `CROSSREF_EMAIL` should always be set. Alternatively, users can configure keys directly in the app via **⚙ Settings**.
-
-```
-CROSSREF_EMAIL=user@example.com
-BRAVE_API_KEY=optional
-SHERPA_API_KEY=optional
-```
-
-On macOS, if Gatekeeper blocks the app: right-click → Open → Open anyway.
-
-## Running tests
+## Tests
 
 ```bash
 pytest -m "not network"          # fast, no network
