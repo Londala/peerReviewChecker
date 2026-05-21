@@ -12,3 +12,7 @@ htmlcov/
 dist/
 build/
 *.spec.bak
+
+# Project meta / AI tooling
+CLAUDE.md
+docs/superpowers/
