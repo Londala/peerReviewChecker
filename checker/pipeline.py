@@ -1,5 +1,5 @@
 from models import ArticleInput, Verdict
-from checker.sources import crossref, doaj, websearch
+from checker.sources import crossref, doaj, openalex, sherpa, websearch
 from checker.verdict import aggregate
 
 FALLBACK_THRESHOLD = 0.6
@@ -8,15 +8,15 @@ FALLBACK_THRESHOLD = 0.6
 def check(article: ArticleInput) -> Verdict:
     results = []
 
-    crossref_result = crossref.lookup(article)
-    results.append(crossref_result)
+    results.append(crossref.lookup(article))
+    results.append(doaj.lookup(article))
+    results.append(openalex.lookup(article))
 
-    doaj_result = doaj.lookup(article)
-    results.append(doaj_result)
+    if article.issn:
+        results.append(sherpa.lookup(article))
 
     best_so_far = max(r.confidence for r in results)
     if best_so_far < FALLBACK_THRESHOLD:
-        web_result = websearch.lookup(article)
-        results.append(web_result)
+        results.append(websearch.lookup(article))
 
     return aggregate(results)
