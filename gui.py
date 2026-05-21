@@ -31,7 +31,7 @@ ROW_B    = "#0d1117"
 ROW_SEL  = "#1c2d40"
 
 SYMBOL     = {True: "✓", False: "✗", None: "?"}
-SYM_COLOR  = {"✓": SUCCESS, "✗": DANGER, "?": WARN, "!": DANGER}
+SYM_COLOR  = {"✓": SUCCESS, "✗": DANGER, "?": WARN, "~": "#e07b54", "!": DANGER}
 
 COL_WIDTHS = (0, 72, 96, 130)   # article=flexible, verdict, confidence, note
 
@@ -339,7 +339,12 @@ class App(ctk.CTk):
 
     def _add_row(self, label: str, verdict: Verdict | None, error: Exception | None) -> None:
         idx = len(self._results)
-        sym = "!" if error else SYMBOL.get(verdict.peer_reviewed if verdict else None, "?")
+        if error:
+            sym = "!"
+        elif verdict and verdict.confidence < 0.4:
+            sym = "~"
+        else:
+            sym = SYMBOL.get(verdict.peer_reviewed if verdict else None, "?")
         conf = f"{verdict.confidence:.0%}" if verdict and not error else "—"
         note = "lookup failed" if error else _extract_note(verdict)
 

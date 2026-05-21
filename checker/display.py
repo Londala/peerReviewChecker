@@ -4,10 +4,12 @@ from models import Verdict
 
 def format_human(verdict: Verdict, article_label: str = "") -> str:
     prefix = f"{article_label}: " if article_label else ""
-    if verdict.peer_reviewed is True:
+    if verdict.peer_reviewed is True and verdict.confidence >= 0.6:
         status = f"✓ Peer-reviewed (confidence: {verdict.confidence:.0%})"
-    elif verdict.peer_reviewed is False:
+    elif verdict.peer_reviewed is False and verdict.confidence >= 0.6:
         status = f"✗ Not peer-reviewed (confidence: {verdict.confidence:.0%})"
+    elif verdict.confidence < 0.4:
+        status = f"~ Likely Not Reviewed (confidence: {verdict.confidence:.0%})"
     else:
         status = f"? Inconclusive (best confidence: {verdict.confidence:.0%})"
 
