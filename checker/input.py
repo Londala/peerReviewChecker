@@ -13,6 +13,12 @@ def normalize(
     author: str | None = None,
     journal: str | None = None,
 ) -> ArticleInput:
+    title = title.strip() if title else None
+    doi = doi.strip() if doi else None
+    issn = issn.strip() if issn else None
+    author = author.strip() if author else None
+    journal = journal.strip() if journal else None
+
     if doi:
         doi = doi.removeprefix("https://doi.org/").removeprefix("http://doi.org/").lower()
 

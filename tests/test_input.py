@@ -41,3 +41,8 @@ def test_all_fields_passed_through():
     )
     assert result.author == "A"
     assert result.journal == "J"
+
+
+def test_whitespace_only_doi_treated_as_missing():
+    with pytest.raises(ValidationError, match="at least one"):
+        normalize(doi="   ")
