@@ -84,6 +84,7 @@ def _parse_work(work: dict) -> SourceResult:
     ref_count = work.get("is-referenced-by-count", 0)
     journal = (work.get("container-title") or ["unknown journal"])[0]
     is_journal_article = work_type == "journal-article"
+    title = (work.get("title") or [None])[0]
 
     if is_journal_article:
         confidence = 0.75 if ref_count > 0 else 0.55
@@ -93,11 +94,12 @@ def _parse_work(work: dict) -> SourceResult:
         evidence += " (peer-review inferred from type)"
         return SourceResult(
             source="crossref", found=True, peer_reviewed=True,
-            confidence=confidence, evidence=evidence,
+            confidence=confidence, evidence=evidence, title=title,
         )
     else:
         return SourceResult(
             source="crossref", found=True, peer_reviewed=False,
             confidence=0.7,
             evidence=f"Work type is '{work_type}', not a journal article",
+            title=title,
         )

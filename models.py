@@ -17,6 +17,7 @@ class SourceResult:
     peer_reviewed: bool | None
     confidence: float
     evidence: str
+    title: str | None = None
 
 
 @dataclass
@@ -24,3 +25,4 @@ class Verdict:
     peer_reviewed: bool | None
     confidence: float
     sources: list[SourceResult] = field(default_factory=list)
+    title: str | None = None

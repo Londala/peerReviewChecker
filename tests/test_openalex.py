@@ -119,6 +119,48 @@ def test_network_error_returns_safe_result():
     assert "Network error" in result.evidence
 
 
+@responses.activate
+@patch.dict(os.environ, {"CROSSREF_EMAIL": "test@example.com"})
+def test_doi_book_chapter_not_peer_reviewed():
+    responses.add(responses.GET, BASE, json={
+        "results": [{
+            "id": "https://openalex.org/W999",
+            "type": "book-chapter",
+            "display_name": "A Book Chapter",
+            "primary_location": {
+                "source": {
+                    "type": "book",
+                    "display_name": "Some Book",
+                    "is_in_doaj": False,
+                }
+            },
+        }],
+        "meta": {"count": 1},
+    })
+    result = lookup(ArticleInput(doi="10.1234/book"))
+    assert result.found is True
+    assert result.peer_reviewed is False
+    assert result.confidence == 0.70
+
+
+@responses.activate
+@patch.dict(os.environ, {"CROSSREF_EMAIL": "test@example.com"})
+def test_doi_missing_primary_location_inconclusive():
+    responses.add(responses.GET, BASE, json={
+        "results": [{
+            "id": "https://openalex.org/W111",
+            "type": "article",
+            "display_name": "Some Article",
+            "primary_location": None,
+        }],
+        "meta": {"count": 1},
+    })
+    result = lookup(ArticleInput(doi="10.1234/noloc"))
+    assert result.found is True
+    assert result.peer_reviewed is None
+    assert result.confidence == 0.30
+
+
 def test_no_doi_or_title_returns_not_found():
     result = lookup(ArticleInput(issn="1234-5678"))
     assert result.found is False

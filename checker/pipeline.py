@@ -19,4 +19,6 @@ def check(article: ArticleInput) -> Verdict:
     if best_so_far < FALLBACK_THRESHOLD:
         results.append(websearch.lookup(article))
 
-    return aggregate(results)
+    verdict = aggregate(results)
+    verdict.title = next((r.title for r in results if r.title), None)
+    return verdict

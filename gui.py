@@ -33,7 +33,7 @@ ROW_SEL  = "#1c2d40"
 SYMBOL     = {True: "✓", False: "✗", None: "?"}
 SYM_COLOR  = {"✓": SUCCESS, "✗": DANGER, "?": WARN, "~": "#e07b54", "!": DANGER}
 
-COL_WIDTHS = (0, 72, 96, 130)   # article=flexible, verdict, confidence, note
+COL_WIDTHS = (0, 72, 100, 130)   # article=flexible, verdict, confidence, note
 
 
 def _extract_note(verdict: Verdict | None) -> str:
@@ -85,12 +85,9 @@ class App(ctk.CTk):
         self._selected: int | None = None
         self._mode = ctk.StringVar(value="single")
         self._batchpath = ""
-        self._drag_x = 0
-        self._drag_y = 0
 
-        self.overrideredirect(True)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(3, weight=1)
 
         self._build()
         self._switch_mode()
@@ -98,7 +95,6 @@ class App(ctk.CTk):
     # ── Construction ──────────────────────────────────────────────────────────
 
     def _build(self) -> None:
-        self._build_titlebar()
         self._build_mode_toggle()
         self._build_input_area()
         self._build_action_row()
@@ -106,29 +102,9 @@ class App(ctk.CTk):
         self._build_detail()
         self._build_export()
 
-    def _build_titlebar(self) -> None:
-        bar = ctk.CTkFrame(self, fg_color=BG, corner_radius=0, height=46)
-        bar.grid(row=0, column=0, sticky="ew")
-        bar.grid_propagate(False)
-        ctk.CTkLabel(
-            bar, text="Peer Review Checker",
-            font=ctk.CTkFont(size=16, weight="bold"), text_color=TEXT,
-        ).place(x=18, rely=0.5, anchor="w")
-        # Window controls
-        for rx, text, cmd in [(1.0, "✕", self.destroy), (0.956, "□", self._toggle_max), (0.912, "─", self._minimize)]:
-            ctk.CTkButton(
-                bar, text=text, width=36, height=36, corner_radius=0,
-                fg_color="transparent", hover_color=SURFACE2,
-                text_color=MUTED, font=ctk.CTkFont(size=13),
-                command=cmd,
-            ).place(relx=rx, rely=0.5, anchor="e")
-        # Drag support
-        bar.bind("<ButtonPress-1>", self._drag_start)
-        bar.bind("<B1-Motion>", self._drag_move)
-
     def _build_mode_toggle(self) -> None:
         bar = ctk.CTkFrame(self, fg_color=SURFACE2, corner_radius=0, height=38)
-        bar.grid(row=1, column=0, sticky="ew")
+        bar.grid(row=0, column=0, sticky="ew")
         bar.grid_propagate(False)
         ctk.CTkLabel(bar, text="Mode:", text_color=MUTED,
                      font=ctk.CTkFont(size=13)).place(x=18, rely=0.5, anchor="w")
@@ -141,7 +117,7 @@ class App(ctk.CTk):
 
     def _build_input_area(self) -> None:
         self._input_area = ctk.CTkFrame(self, fg_color=BG, corner_radius=0)
-        self._input_area.grid(row=2, column=0, sticky="ew")
+        self._input_area.grid(row=1, column=0, sticky="ew")
         self._input_area.grid_columnconfigure(0, weight=1)
 
         # Single panel: 5 entry fields
@@ -180,7 +156,7 @@ class App(ctk.CTk):
 
     def _build_action_row(self) -> None:
         row = ctk.CTkFrame(self, fg_color=BG, corner_radius=0)
-        row.grid(row=3, column=0, sticky="ew")
+        row.grid(row=2, column=0, sticky="ew")
         self._btn = ctk.CTkButton(
             row, text="Check", width=110,
             fg_color=ACCENT_D, hover_color=ACCENT,
@@ -197,7 +173,7 @@ class App(ctk.CTk):
 
     def _build_results(self) -> None:
         outer = ctk.CTkFrame(self, fg_color=SURFACE, corner_radius=8)
-        outer.grid(row=4, column=0, sticky="nsew", padx=16, pady=(4, 4))
+        outer.grid(row=3, column=0, sticky="nsew", padx=16, pady=(4, 4))
         outer.grid_columnconfigure(0, weight=1)
         outer.grid_rowconfigure(1, weight=1)
 
@@ -246,26 +222,6 @@ class App(ctk.CTk):
                 command=cmd,
             ).pack(side="left", padx=(16 if text == "Export CSV" else 0, 6), pady=8)
 
-    # ── Window chrome ─────────────────────────────────────────────────────────
-
-    def _drag_start(self, event) -> None:
-        self._drag_x = event.x_root - self.winfo_x()
-        self._drag_y = event.y_root - self.winfo_y()
-
-    def _drag_move(self, event) -> None:
-        self.geometry(f"+{event.x_root - self._drag_x}+{event.y_root - self._drag_y}")
-
-    def _minimize(self) -> None:
-        self.overrideredirect(False)
-        self.iconify()
-        self.bind("<Map>", lambda _e: (self.overrideredirect(True), self.unbind("<Map>")))
-
-    def _toggle_max(self) -> None:
-        if self.wm_attributes("-zoomed"):
-            self.wm_attributes("-zoomed", False)
-        else:
-            self.wm_attributes("-zoomed", True)
-
     # ── Handlers ──────────────────────────────────────────────────────────────
 
     def _switch_mode(self) -> None:
@@ -303,7 +259,7 @@ class App(ctk.CTk):
             self._btn.configure(state="normal")
             self._status_lbl.configure(text="")
         if self._results:
-            self._export_row.grid(row=6, column=0, sticky="ew")
+            self._export_row.grid(row=5, column=0, sticky="ew")
 
     def _check_single(self) -> None:
         try:
@@ -318,7 +274,10 @@ class App(ctk.CTk):
             self._error_lbl.configure(text=f"⚠ {e}")
             return
         verdict = check(article)
-        label = article.doi or article.title or article.issn or "article"
+        if article.doi and verdict.title:
+            label = f"{verdict.title} ({article.doi})"
+        else:
+            label = article.doi or article.title or article.issn or "article"
         self._add_row(label, verdict, None)
 
     def _check_batch(self) -> None:
@@ -361,7 +320,7 @@ class App(ctk.CTk):
         rf.grid(row=idx, column=0, columnspan=4, sticky="ew", pady=(0, 1))
         _col_conf(rf)
 
-        short = label if len(label) <= 52 else label[:49] + "…"
+        short = label if len(label) <= 90 else label[:87] + "…"
         cells = [
             (short, TEXT, 0, "w"),
             (sym, SYM_COLOR.get(sym, TEXT), COL_WIDTHS[1], "center"),
@@ -412,7 +371,7 @@ class App(ctk.CTk):
         self._detail_box.delete("1.0", "end")
         self._detail_box.insert("end", "\n".join(lines))
         self._detail_box.configure(state="disabled")
-        self._detail.grid(row=5, column=0, sticky="ew", padx=16, pady=(0, 4))
+        self._detail.grid(row=4, column=0, sticky="ew", padx=16, pady=(0, 4))
 
     # ── Export ────────────────────────────────────────────────────────────────
 

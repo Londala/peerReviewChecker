@@ -114,6 +114,78 @@ def test_title_unrelated_result_returns_not_found():
 
 
 @responses.activate
+def test_doi_book_chapter_confidence():
+    responses.add(
+        responses.GET,
+        "https://api.crossref.org/works/10.1234/book",
+        json={
+            "status": "ok",
+            "message": {
+                "type": "book-chapter",
+                "is-referenced-by-count": 0,
+                "title": ["A Book Chapter"],
+                "container-title": [],
+            },
+        },
+    )
+    result = lookup(ArticleInput(doi="10.1234/book"))
+    assert result.peer_reviewed is False
+    assert result.confidence == 0.7
+
+
+@responses.activate
+def test_doi_journal_article_no_citations_lower_confidence():
+    responses.add(
+        responses.GET,
+        "https://api.crossref.org/works/10.1234/new",
+        json={
+            "status": "ok",
+            "message": {
+                "type": "journal-article",
+                "is-referenced-by-count": 0,
+                "title": ["New Article"],
+                "container-title": ["Some Journal"],
+            },
+        },
+    )
+    result = lookup(ArticleInput(doi="10.1234/new"))
+    assert result.peer_reviewed is True
+    assert result.confidence == 0.55
+
+
+@responses.activate
+def test_doi_posted_content_not_peer_reviewed():
+    responses.add(
+        responses.GET,
+        "https://api.crossref.org/works/10.1234/preprint",
+        json={
+            "status": "ok",
+            "message": {
+                "type": "posted-content",
+                "is-referenced-by-count": 0,
+                "title": ["A Preprint"],
+                "container-title": [],
+            },
+        },
+    )
+    result = lookup(ArticleInput(doi="10.1234/preprint"))
+    assert result.peer_reviewed is False
+    assert result.confidence == 0.7
+
+
+@responses.activate
+def test_title_empty_results_returns_not_found():
+    responses.add(
+        responses.GET,
+        "https://api.crossref.org/works",
+        json={"status": "ok", "message": {"items": []}},
+    )
+    result = lookup(ArticleInput(title="Some Article"))
+    assert result.found is False
+    assert result.confidence == 0.0
+
+
+@responses.activate
 def test_network_error_returns_safe_result():
     responses.add(
         responses.GET,

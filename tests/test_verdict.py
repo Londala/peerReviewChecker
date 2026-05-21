@@ -50,3 +50,40 @@ def test_not_peer_reviewed_verdict():
     verdict = aggregate(results)
     assert verdict.peer_reviewed is False
     assert verdict.confidence == 0.85
+
+
+def test_not_peer_reviewed_below_threshold_is_inconclusive():
+    results = [_result("crossref", False, 0.4)]
+    verdict = aggregate(results)
+    assert verdict.peer_reviewed is None
+    assert verdict.confidence == 0.4
+
+
+def test_conflicting_sources_picks_highest_confidence():
+    results = [
+        _result("crossref", True, 0.75),
+        _result("doaj", False, 0.50),
+    ]
+    verdict = aggregate(results)
+    assert verdict.peer_reviewed is True
+    assert verdict.confidence == 0.75
+
+
+def test_all_inconclusive_sources():
+    results = [
+        _result("crossref", None, 0.0),
+        _result("openalex", None, 0.30),
+    ]
+    verdict = aggregate(results)
+    assert verdict.peer_reviewed is None
+    assert verdict.confidence == 0.30
+
+
+def test_multiple_sources_all_agree_not_peer_reviewed():
+    results = [
+        _result("crossref", False, 0.70),
+        _result("openalex", False, 0.70),
+    ]
+    verdict = aggregate(results)
+    assert verdict.peer_reviewed is False
+    assert verdict.confidence == 0.70

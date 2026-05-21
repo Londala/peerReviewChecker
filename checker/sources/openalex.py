@@ -84,6 +84,7 @@ def _parse_work(work: dict) -> SourceResult:
     source_type = source.get("type", "")
     source_name = source.get("display_name", "unknown source")
     is_in_doaj = source.get("is_in_doaj", False)
+    title = work.get("display_name") or None
 
     if work_type == "article" and source_type == "journal":
         confidence = 0.95 if is_in_doaj else 0.80
@@ -92,15 +93,18 @@ def _parse_work(work: dict) -> SourceResult:
             source="openalex", found=True, peer_reviewed=True,
             confidence=confidence,
             evidence=f"Journal article in '{source_name}'{doaj_note}",
+            title=title,
         )
     if work_type == "article" and source_type != "journal":
         return SourceResult(
             source="openalex", found=True, peer_reviewed=None,
             confidence=0.30,
             evidence=f"Article hosted on '{source_name}' (type: {source_type}) — may be preprint",
+            title=title,
         )
     return SourceResult(
         source="openalex", found=True, peer_reviewed=False,
         confidence=0.70,
         evidence=f"Work type is '{work_type}', not a journal article",
+        title=title,
     )

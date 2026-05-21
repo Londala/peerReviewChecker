@@ -1,12 +1,20 @@
 # Peer Review Checker
 
-CLI tool that checks whether a journal article is peer-reviewed by querying Crossref, DOAJ, OpenAlex, Sherpa Romeo, and Brave Search.
+Checks whether a journal article is peer-reviewed by querying Crossref, DOAJ, OpenAlex, Sherpa Romeo, and Brave Search. Available as a desktop GUI or CLI.
+
+## Requirements
+
+- Python 3.10+
+- Linux, macOS, or Windows (WSL supported)
+- `tkinter` — usually bundled with Python; on Ubuntu/Debian: `sudo apt-get install python3-tk`
 
 ## Setup
 
 ```bash
+git clone <repo-url>
+cd peerReviewChecker
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env
 ```
@@ -21,7 +29,17 @@ SHERPA_API_KEY=your_key_here        # Optional — enables Sherpa Romeo journal 
 
 Brave API key is free at [brave.com/search/api](https://brave.com/search/api) (2000 req/month). Sherpa Romeo key is free at [v2.sherpa.ac.uk/cgi/register](https://v2.sherpa.ac.uk/cgi/register). Without optional keys, those sources are skipped.
 
-## Usage
+## GUI
+
+```bash
+python gui.py
+```
+
+Enter any combination of Title, DOI, ISSN, Author, and Journal, then click **Check**. Results appear in the table with verdict symbol, confidence, and a note for low-confidence results. When a DOI is used, the table shows the resolved article title with the DOI in parentheses. Click any row to expand source details. Use **Export CSV** or **Export JSON** to save results.
+
+**Batch mode:** switch to *Batch File*, browse for a CSV or JSON file (same format as CLI batch below), and click **Check**. Rows appear as each article completes.
+
+## CLI Usage
 
 ### Single article
 
@@ -92,8 +110,9 @@ Results stream to stdout as each article completes. Errors print to stderr; proc
 
 | Symbol | Meaning |
 |--------|---------|
-| `✓` | Peer-reviewed |
-| `✗` | Not peer-reviewed |
+| `✓` | Peer-reviewed (confidence ≥ 60%) |
+| `✗` | Not peer-reviewed (confidence ≥ 60%) |
+| `~` | Likely not reviewed (confidence < 40%) |
 | `?` | Inconclusive |
 
 Confidence ranges from 0–1. Sources:
