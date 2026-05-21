@@ -1,4 +1,3 @@
-import responses as rsps_lib
 import responses
 import requests
 from models import ArticleInput
@@ -86,6 +85,7 @@ def test_title_fallback_query():
     result = lookup(article)
     assert result.found is True
     assert result.peer_reviewed is True
+    assert result.confidence <= 0.5
 
 
 @responses.activate

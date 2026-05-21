@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from models import ArticleInput, SourceResult
 
@@ -26,7 +27,6 @@ def lookup(article: ArticleInput) -> SourceResult:
 def _get_with_retry(url: str, **kwargs) -> requests.Response:
     resp = requests.get(url, **kwargs)
     if resp.status_code == 429:
-        import time
         time.sleep(2)
         resp = requests.get(url, **kwargs)
     return resp
@@ -57,7 +57,13 @@ def _lookup_by_title(title: str) -> SourceResult:
             source="crossref", found=False, peer_reviewed=None,
             confidence=0.0, evidence="No results found in Crossref",
         )
-    return _parse_work(items[0])
+    result = _parse_work(items[0])
+    # Title matches are less reliable than DOI — cap confidence
+    return SourceResult(
+        source=result.source, found=result.found, peer_reviewed=result.peer_reviewed,
+        confidence=min(result.confidence, 0.5),
+        evidence=result.evidence + " (title match — lower confidence)",
+    )
 
 
 def _parse_work(work: dict) -> SourceResult:
@@ -65,21 +71,19 @@ def _parse_work(work: dict) -> SourceResult:
     ref_count = work.get("is-referenced-by-count", 0)
     journal = (work.get("container-title") or ["unknown journal"])[0]
     is_journal_article = work_type == "journal-article"
-    peer_reviewed = is_journal_article and ref_count > 0
 
-    if is_journal_article and ref_count > 0:
-        evidence = f"Journal article in '{journal}' with {ref_count} citations"
-    elif is_journal_article:
-        evidence = f"Journal article in '{journal}' (0 citations — treating as not peer-reviewed)"
-        peer_reviewed = False
+    if is_journal_article:
+        confidence = 0.85 if ref_count > 0 else 0.65
+        evidence = f"Journal article in '{journal}'"
+        if ref_count > 0:
+            evidence += f" with {ref_count} citations"
+        return SourceResult(
+            source="crossref", found=True, peer_reviewed=True,
+            confidence=confidence, evidence=evidence,
+        )
     else:
-        evidence = f"Work type is '{work_type}', not a journal article"
-        peer_reviewed = False
-
-    return SourceResult(
-        source="crossref",
-        found=True,
-        peer_reviewed=peer_reviewed,
-        confidence=0.85 if peer_reviewed else 0.7,
-        evidence=evidence,
-    )
+        return SourceResult(
+            source="crossref", found=True, peer_reviewed=False,
+            confidence=0.7,
+            evidence=f"Work type is '{work_type}', not a journal article",
+        )
