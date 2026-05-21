@@ -1,5 +1,6 @@
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -75,6 +76,73 @@ def _col_conf(frame: ctk.CTkBaseClass | ctk.CTkScrollableFrame) -> None:
     frame.grid_columnconfigure(0, weight=1)
     for i, w in enumerate(COL_WIDTHS[1:], start=1):
         frame.grid_columnconfigure(i, minsize=w, weight=0)
+
+
+_ENV_FIELDS = [
+    ("CROSSREF_EMAIL",  "Email for Crossref / OpenAlex polite pool (required)"),
+    ("BRAVE_API_KEY",   "Brave Search API key — optional, enables web fallback"),
+    ("SHERPA_API_KEY",  "Sherpa Romeo API key — optional, enables journal lookup"),
+]
+
+
+class SettingsWindow(ctk.CTkToplevel):
+    def __init__(self, parent: ctk.CTk) -> None:
+        super().__init__(parent)
+        self.title("Settings")
+        self.geometry("520x260")
+        self.resizable(False, False)
+        self.configure(fg_color=BG)
+        self.grab_set()
+
+        self._entries: dict[str, ctk.CTkEntry] = {}
+        self.grid_columnconfigure(1, weight=1)
+
+        for i, (key, hint) in enumerate(_ENV_FIELDS):
+            ctk.CTkLabel(
+                self, text=key + ":", text_color=MUTED,
+                font=ctk.CTkFont(size=13), width=140, anchor="e",
+            ).grid(row=i, column=0, padx=(16, 8), pady=(14 if i == 0 else 6, 0), sticky="e")
+
+            entry = ctk.CTkEntry(
+                self, fg_color=SURFACE, border_color=BORDER, text_color=TEXT,
+                font=ctk.CTkFont(size=13), show="*" if "KEY" in key else "",
+            )
+            entry.insert(0, os.getenv(key, ""))
+            entry.grid(row=i, column=1, padx=(0, 16), pady=(14 if i == 0 else 6, 0), sticky="ew")
+
+            ctk.CTkLabel(
+                self, text=hint, text_color=MUTED,
+                font=ctk.CTkFont(size=11), anchor="w",
+            ).grid(row=i, column=2, padx=(0, 16), pady=(14 if i == 0 else 6, 0), sticky="w")
+
+            self._entries[key] = entry
+
+        btn_row = ctk.CTkFrame(self, fg_color=BG, corner_radius=0)
+        btn_row.grid(row=len(_ENV_FIELDS), column=0, columnspan=3, sticky="ew", pady=(16, 10))
+        ctk.CTkButton(
+            btn_row, text="Save", width=100,
+            fg_color=ACCENT_D, hover_color=ACCENT, text_color=TEXT,
+            command=self._save,
+        ).pack(side="left", padx=16)
+        ctk.CTkButton(
+            btn_row, text="Cancel", width=100,
+            fg_color=SURFACE2, hover_color=BORDER, text_color=TEXT,
+            command=self.destroy,
+        ).pack(side="left", padx=0)
+
+    def _save(self) -> None:
+        env_path = _app_dir / ".env"
+        lines = []
+        for key, entry in self._entries.items():
+            val = entry.get().strip()
+            lines.append(f"{key}={val}")
+            if val:
+                os.environ[key] = val
+            else:
+                os.environ.pop(key, None)
+        env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        load_dotenv(env_path, override=True)
+        self.destroy()
 
 
 class App(ctk.CTk):
@@ -175,6 +243,12 @@ class App(ctk.CTk):
         self._error_lbl = ctk.CTkLabel(row, text="", text_color=DANGER,
                                        font=ctk.CTkFont(size=13))
         self._error_lbl.pack(side="left", padx=4)
+        ctk.CTkButton(
+            row, text="⚙ Settings", width=100,
+            fg_color=SURFACE2, hover_color=BORDER, text_color=MUTED,
+            font=ctk.CTkFont(size=13),
+            command=lambda: SettingsWindow(self),
+        ).pack(side="right", padx=16, pady=10)
 
     def _build_results(self) -> None:
         outer = ctk.CTkFrame(self, fg_color=SURFACE, corner_radius=8)
