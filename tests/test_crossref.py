@@ -89,6 +89,31 @@ def test_title_fallback_query():
 
 
 @responses.activate
+def test_title_unrelated_result_returns_not_found():
+    responses.add(
+        responses.GET,
+        "https://api.crossref.org/works",
+        json={
+            "status": "ok",
+            "message": {
+                "items": [
+                    {
+                        "type": "journal-article",
+                        "is-referenced-by-count": 10,
+                        "title": ["Digital Threats Research and Practice"],
+                        "container-title": ["Some Journal"],
+                    }
+                ]
+            },
+        },
+    )
+    article = ArticleInput(title="A Fake Article That Does Not Exist")
+    result = lookup(article)
+    assert result.found is False
+    assert result.confidence == 0.0
+
+
+@responses.activate
 def test_network_error_returns_safe_result():
     responses.add(
         responses.GET,

@@ -1,7 +1,15 @@
 import os
 import time
+from difflib import SequenceMatcher
+
 import requests
 from models import ArticleInput, SourceResult
+
+TITLE_SIM_THRESHOLD = 0.5
+
+
+def _title_sim(a: str, b: str) -> float:
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 BASE_URL = "https://api.crossref.org"
 HEADERS = {"User-Agent": f"PeerReviewChecker/1.0 (mailto:{os.getenv('CROSSREF_EMAIL', 'user@example.com')})"}
@@ -57,8 +65,13 @@ def _lookup_by_title(title: str) -> SourceResult:
             source="crossref", found=False, peer_reviewed=None,
             confidence=0.0, evidence="No results found in Crossref",
         )
+    returned_title = (items[0].get("title") or [""])[0]
+    if _title_sim(title, returned_title) < TITLE_SIM_THRESHOLD:
+        return SourceResult(
+            source="crossref", found=False, peer_reviewed=None,
+            confidence=0.0, evidence="No sufficiently matching title found in Crossref",
+        )
     result = _parse_work(items[0])
-    # Title matches are less reliable than DOI — cap confidence
     return SourceResult(
         source=result.source, found=result.found, peer_reviewed=result.peer_reviewed,
         confidence=min(result.confidence, 0.5),

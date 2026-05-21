@@ -123,3 +123,26 @@ def test_no_doi_or_title_returns_not_found():
     result = lookup(ArticleInput(issn="1234-5678"))
     assert result.found is False
     assert result.confidence == 0.0
+
+
+@responses.activate
+@patch.dict(os.environ, {"CROSSREF_EMAIL": "test@example.com"})
+def test_title_unrelated_result_returns_not_found():
+    responses.add(responses.GET, BASE, json={
+        "results": [{
+            "id": "https://openalex.org/W999",
+            "type": "article",
+            "display_name": "Digital Threats Research and Practice",
+            "primary_location": {
+                "source": {
+                    "type": "journal",
+                    "display_name": "Some Journal",
+                    "is_in_doaj": False,
+                }
+            },
+        }],
+        "meta": {"count": 1},
+    })
+    result = lookup(ArticleInput(title="A Fake Article That Does Not Exist"))
+    assert result.found is False
+    assert result.confidence == 0.0

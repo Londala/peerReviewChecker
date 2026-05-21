@@ -1,6 +1,14 @@
 import os
+from difflib import SequenceMatcher
+
 import requests
 from models import ArticleInput, SourceResult
+
+TITLE_SIM_THRESHOLD = 0.5
+
+
+def _title_sim(a: str, b: str) -> float:
+    return SequenceMatcher(None, a.lower(), b.lower()).ratio()
 
 BASE_URL = "https://api.openalex.org/works"
 
@@ -54,6 +62,12 @@ def _lookup_by_title(title: str) -> SourceResult:
         return SourceResult(
             source="openalex", found=False, peer_reviewed=None,
             confidence=0.0, evidence="Title not found in OpenAlex",
+        )
+    returned_title = results[0].get("display_name", "")
+    if _title_sim(title, returned_title) < TITLE_SIM_THRESHOLD:
+        return SourceResult(
+            source="openalex", found=False, peer_reviewed=None,
+            confidence=0.0, evidence="No sufficiently matching title found in OpenAlex",
         )
     result = _parse_work(results[0])
     return SourceResult(
