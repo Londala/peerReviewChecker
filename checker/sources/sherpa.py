@@ -41,10 +41,11 @@ def _lookup_by_issn(issn: str, api_key: str) -> SourceResult:
     )
     resp.raise_for_status()
     data = resp.json()
-    if data.get("total_results", 0) > 0:
-        item = data["items"][0]
+    items = data.get("items", [])
+    if items:
+        item = items[0]
         titles = item.get("title", [])
-        journal_name = titles[0]["title"] if titles else "unknown journal"
+        journal_name = titles[0].get("title", "unknown journal") if titles else "unknown journal"
         return SourceResult(
             source="sherpa", found=True, peer_reviewed=True,
             confidence=0.80,
