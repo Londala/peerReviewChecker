@@ -1,6 +1,6 @@
 # Peer Review Checker
 
-CLI tool that checks whether a journal article is peer-reviewed by querying Crossref, DOAJ, and Brave Search.
+CLI tool that checks whether a journal article is peer-reviewed by querying Crossref, DOAJ, OpenAlex, Sherpa Romeo, and Brave Search.
 
 ## Setup
 
@@ -14,11 +14,12 @@ cp .env.example .env
 Edit `.env` and set:
 
 ```
-CROSSREF_EMAIL=your@email.com       # Required for Crossref polite pool
+CROSSREF_EMAIL=your@email.com       # Required for Crossref and OpenAlex polite pool
 BRAVE_API_KEY=your_key_here         # Optional — enables web search fallback
+SHERPA_API_KEY=your_key_here        # Optional — enables Sherpa Romeo journal lookup
 ```
 
-Brave API key is free at [brave.com/search/api](https://brave.com/search/api) (2000 req/month). Without it, web search is skipped and only Crossref + DOAJ are queried.
+Brave API key is free at [brave.com/search/api](https://brave.com/search/api) (2000 req/month). Sherpa Romeo key is free at [v2.sherpa.ac.uk/cgi/register](https://v2.sherpa.ac.uk/cgi/register). Without optional keys, those sources are skipped.
 
 ## Usage
 
@@ -100,8 +101,12 @@ Confidence ranges from 0–1. Sources:
 | Source | Confidence | Notes |
 |--------|-----------|-------|
 | DOAJ | 0.95 | Indexes only peer-reviewed OA journals |
+| OpenAlex (DOAJ-indexed) | 0.95 | Cross-validated with DOAJ via OpenAlex metadata |
 | Crossref | 0.75 / 0.55 | Inferred from `journal-article` type; citations boost confidence |
+| OpenAlex | 0.80 | Journal article in OpenAlex non-DOAJ journal |
+| Sherpa Romeo | 0.80 | Journal found in Sherpa Romeo publisher database (requires ISSN) |
 | Brave Search | 0.50 | Heuristic — PubMed/Scopus/WoS signals in top 3 results |
+| OpenAlex (preprint) | 0.30 | Article found but hosted on repository — may be preprint |
 
 Verdict is inconclusive if best confidence < 0.6.
 
