@@ -1,5 +1,6 @@
 import responses as rsps_lib
 import responses
+import requests
 from models import ArticleInput
 from checker.sources.crossref import lookup
 
@@ -92,7 +93,7 @@ def test_network_error_returns_safe_result():
     responses.add(
         responses.GET,
         "https://api.crossref.org/works/10.1234/err",
-        body=Exception("connection refused"),
+        body=requests.exceptions.ConnectionError("connection refused"),
     )
     article = ArticleInput(doi="10.1234/err")
     result = lookup(article)

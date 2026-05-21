@@ -12,7 +12,7 @@ def lookup(article: ArticleInput) -> SourceResult:
             return _lookup_by_doi(article.doi)
         if article.title:
             return _lookup_by_title(article.title)
-    except Exception as e:
+    except requests.RequestException as e:
         return SourceResult(
             source="crossref", found=False, peer_reviewed=None,
             confidence=0.0, evidence=f"Network error: {e}",
