@@ -53,6 +53,8 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     # Only create a release when triggered by a version tag
     if: startsWith(github.ref, 'refs/tags/v')
 
