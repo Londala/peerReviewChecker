@@ -15,7 +15,7 @@ from models import Verdict
 # When frozen by PyInstaller, load .env from the executable's directory
 # rather than the extraction temp dir.
 _app_dir = Path(sys.executable).parent if getattr(sys, "frozen", False) else Path(__file__).parent
-load_dotenv(_app_dir / ".env")
+load_dotenv(_app_dir / ".env", override=True)
 
 ctk.set_appearance_mode("dark")
 ctk.set_default_color_theme("dark-blue")
@@ -104,6 +104,16 @@ class SettingsWindow(ctk.CTkToplevel):
         self._entries: dict[str, ctk.CTkEntry] = {}
         self.grid_columnconfigure(1, weight=1)
 
+        # Read saved values directly from file so the UI reflects what's on disk,
+        # not whatever os.environ happens to contain.
+        env_path = _app_dir / ".env"
+        _saved: dict[str, str] = {}
+        if env_path.exists():
+            for line in env_path.read_text(encoding="utf-8").splitlines():
+                if "=" in line and not line.startswith("#"):
+                    k, _, v = line.partition("=")
+                    _saved[k.strip()] = v.strip()
+
         for i, (key, hint) in enumerate(_ENV_FIELDS):
             row = i * 2
             ctk.CTkLabel(
@@ -115,7 +125,7 @@ class SettingsWindow(ctk.CTkToplevel):
                 self, fg_color=SURFACE, border_color=BORDER, text_color=TEXT,
                 font=ctk.CTkFont(size=13), show="*" if "KEY" in key else "",
             )
-            entry.insert(0, os.getenv(key, ""))
+            entry.insert(0, _saved.get(key, os.getenv(key, "")))
             entry.grid(row=row, column=1, padx=(0, 16), pady=(14 if i == 0 else 10, 0), sticky="ew")
 
             ctk.CTkLabel(
