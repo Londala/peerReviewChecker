@@ -18,6 +18,7 @@ class SourceResult:
     confidence: float
     evidence: str
     title: str | None = None
+    citations: int | None = None
 
 
 @dataclass

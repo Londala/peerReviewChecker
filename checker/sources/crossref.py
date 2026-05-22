@@ -95,6 +95,7 @@ def _parse_work(work: dict) -> SourceResult:
         return SourceResult(
             source="crossref", found=True, peer_reviewed=True,
             confidence=confidence, evidence=evidence, title=title,
+            citations=ref_count if ref_count > 0 else None,
         )
     else:
         return SourceResult(

@@ -43,7 +43,14 @@ COL_WIDTHS = (0, 72, 100, 130)   # article=flexible, verdict, confidence, note
 
 
 def _extract_note(verdict: Verdict | None) -> str:
-    if verdict is None or verdict.confidence >= 0.6:
+    if verdict is None:
+        return ""
+    if verdict.peer_reviewed is True and verdict.confidence >= 0.6:
+        citations = next(
+            (s.citations for s in verdict.sources if s.citations is not None), None
+        )
+        return f"{citations:,} citations" if citations else ""
+    if verdict.confidence >= 0.6:
         return ""
     if not verdict.sources:
         return "low confidence"
@@ -404,7 +411,7 @@ class App(ctk.CTk):
             (short, TEXT, 0, "w"),
             (sym, SYM_COLOR.get(sym, TEXT), COL_WIDTHS[1], "center"),
             (conf, MUTED, COL_WIDTHS[2], "center"),
-            (note, WARN if note else MUTED, COL_WIDTHS[3], "w"),
+            (note, MUTED if (not note or "citations" in note) else WARN, COL_WIDTHS[3], "w"),
         ]
         for col, (text, color, width, anchor) in enumerate(cells):
             lbl = ctk.CTkLabel(
