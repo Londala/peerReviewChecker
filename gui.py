@@ -96,7 +96,7 @@ class SettingsWindow(ctk.CTkToplevel):
     def __init__(self, parent: ctk.CTk) -> None:
         super().__init__(parent)
         self.title("Settings")
-        self.geometry("520x260")
+        self.geometry("540x320")
         self.resizable(False, False)
         self.configure(fg_color=BG)
         self.grab_set()
@@ -105,27 +105,28 @@ class SettingsWindow(ctk.CTkToplevel):
         self.grid_columnconfigure(1, weight=1)
 
         for i, (key, hint) in enumerate(_ENV_FIELDS):
+            row = i * 2
             ctk.CTkLabel(
                 self, text=key + ":", text_color=MUTED,
                 font=ctk.CTkFont(size=13), width=140, anchor="e",
-            ).grid(row=i, column=0, padx=(16, 8), pady=(14 if i == 0 else 6, 0), sticky="e")
+            ).grid(row=row, column=0, padx=(16, 8), pady=(14 if i == 0 else 10, 0), sticky="e")
 
             entry = ctk.CTkEntry(
                 self, fg_color=SURFACE, border_color=BORDER, text_color=TEXT,
                 font=ctk.CTkFont(size=13), show="*" if "KEY" in key else "",
             )
             entry.insert(0, os.getenv(key, ""))
-            entry.grid(row=i, column=1, padx=(0, 16), pady=(14 if i == 0 else 6, 0), sticky="ew")
+            entry.grid(row=row, column=1, padx=(0, 16), pady=(14 if i == 0 else 10, 0), sticky="ew")
 
             ctk.CTkLabel(
                 self, text=hint, text_color=MUTED,
                 font=ctk.CTkFont(size=11), anchor="w",
-            ).grid(row=i, column=2, padx=(0, 16), pady=(14 if i == 0 else 6, 0), sticky="w")
+            ).grid(row=row + 1, column=1, padx=(0, 16), pady=(1, 0), sticky="w")
 
             self._entries[key] = entry
 
         btn_row = ctk.CTkFrame(self, fg_color=BG, corner_radius=0)
-        btn_row.grid(row=len(_ENV_FIELDS), column=0, columnspan=3, sticky="ew", pady=(16, 10))
+        btn_row.grid(row=len(_ENV_FIELDS) * 2, column=0, columnspan=2, sticky="ew", pady=(16, 10))
         ctk.CTkButton(
             btn_row, text="Save", width=100,
             fg_color=ACCENT_D, hover_color=ACCENT, text_color=TEXT,
