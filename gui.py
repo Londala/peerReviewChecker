@@ -99,7 +99,7 @@ class SettingsWindow(ctk.CTkToplevel):
         self.geometry("540x320")
         self.resizable(False, False)
         self.configure(fg_color=BG)
-        self.grab_set()
+        self.after(100, self.grab_set)
 
         self._entries: dict[str, ctk.CTkEntry] = {}
         self.grid_columnconfigure(1, weight=1)
