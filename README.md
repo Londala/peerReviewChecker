@@ -149,3 +149,7 @@ build.bat
 pytest -m "not network"          # fast, no network
 pytest -m network                # real API calls (requires internet)
 ```
+
+## Version
+
+v0.0.1
